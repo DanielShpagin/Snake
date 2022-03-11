@@ -212,6 +212,21 @@
                 ctx.fill();
             }
 
+            function drawApple() {
+                ctx.beginPath();
+                ctx.arc(0, 0, 5, 0, Math.PI*2, false);
+                ctx.fill();
+
+                ctx.fillStyle = "DarkGreen";
+
+                ctx.beginPath();
+                ctx.moveTo(-0.7, -5);
+                ctx.lineTo(-0.7, -7.5);
+                ctx.lineTo(0.7, -7.5);
+                ctx.lineTo(0.7, -5);
+                ctx.fill();
+            }
+
             Block.prototype.drawElement = function (bodyPart, direction, color) {
                 var x = this.col;
                 var y = this.row;
@@ -224,6 +239,7 @@
                 if (bodyPart === 1) drawHead(); 
                 if (bodyPart === 2) drawTurn();
                 if (bodyPart === 3) drawHeadWithOpenMouth();
+                if (bodyPart === 4) drawApple();
                 ctx.resetTransform();
             }
 
@@ -421,7 +437,7 @@
             }
 
             Apple.prototype.draw = function () {
-                this.position.drawCircle("Red", blockSize / 2);
+                this.position.drawElement(4, 0, "Red");
             }
 
             Apple.prototype.move = function () {
