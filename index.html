@@ -7,14 +7,17 @@
     <body>
         <canvas id="canvas" width="640" height="640"></canvas>
         <script src='https://code.jquery.com/jquery-2.1.0.js'></script>
-        <img id="source" src="https://danielshpagin.github.io/Snake/apple.svg">
+        <img id="source1" src="https://danielshpagin.github.io/Snake/apple.svg">
+        <img id="source2" src="https://danielshpagin.github.io/Snake/crystal.svg">
 
         <a id="score"></a>
-        
+        <a id="tryAgain" class="myButton">↻ TRY AGAIN</a>
+
         <script>
             var canvas = document.getElementById("canvas");
             var ctx = canvas.getContext("2d");
-            var image = document.getElementById("source");
+            var image = document.getElementById("source1");
+            var imageCrystal = document.getElementById("source2");
 
             var width = canvas.width;
             var height = canvas.height;
@@ -25,6 +28,27 @@
             var heightInBlocks = height / blockSize;
 
             var score = 0;
+            var animationTime = 80;
+            var timeoutId;
+            var game = false;
+
+            var cId = 0;
+            var code1 = 0;
+            var code2 = 0;
+
+            var crystalId;
+
+            function setCrystal() {
+                crystalId = setTimeout(function () {
+                    cId = 1;
+                    setTimeout(function () {
+                        cId = 0;
+                        crystalId = setTimeout(setCrystal);
+                    }, 10000);
+                }, 10000);
+            }
+
+            setCrystal();
 
             function drawBorder() {
                 ctx.fillStyle = "Green";
@@ -35,16 +59,13 @@
             }
 
             function drawScore() {
-                $('#score').text(`Score: ${score}`)
+                $('#score').text(`Score: ${score}`);
             }
 
             function gameOver() {
-                clearInterval(intervalId);
-                ctx.font = "60px Courier";
-                ctx.fillStyle = "Black";
-                ctx.textAlign = "center";
-                ctx.textBaseline = "middle";
-                ctx.fillText("Game Over", width / 2, height / 2);
+                game = true;
+                $('#tryAgain').show();
+                console.log('nfeunoc');
             }
 
             function circle(x, y, radius, fillCircle) {
@@ -285,6 +306,10 @@
                 ctx.drawImage(image, -7.5, -7.5, 15, 15);
             }
 
+            function drawCrystal() {
+                ctx.drawImage(imageCrystal, -7.5, -7.5, 15, 15)
+            }
+
             Block.prototype.drawElement = function (bodyPart, direction, color) {
                 var x = this.col;
                 var y = this.row;
@@ -299,6 +324,7 @@
                 if (bodyPart === 3) drawHeadWithOpenMouth();
                 if (bodyPart === 4) drawApple();
                 if (bodyPart === 5) drawBody();
+                if (bodyPart === 6) drawCrystal();
                 ctx.resetTransform();
             }
 
@@ -382,7 +408,8 @@
                             var ax = this.segments[i].col+dx*p;
                             var ay = this.segments[i].row+dy*p;
 
-                            if (ax === apple.position.col && ay === apple.position.row) {
+                            if ((ax === apple.position.col && ay === apple.position.row) || 
+                            (cId === 1 && ax === crystal.position.col && ay === crystal.position.row)) {
                                 if (dx === -1 && dy === 0) {
                                     this.segments[i].drawElement(3, 2, "Salmon");
                                 }
@@ -429,10 +456,7 @@
                             } else
                             if (dx === 0 && dy === -2) {
                                 this.segments[i].drawElement(5, 1, "Salmon");
-                            } else {
-                                this.segments[i].drawElement(5, 0, "Salmon");
-                                console.log(dx, dy);
-                            }
+                            } else this.segments[i].drawElement(5, 0, "Salmon");
                         }
                     }
                 }
@@ -440,6 +464,7 @@
 
             Snake.prototype.move = function () {
                 var head = this.segments[0];
+
                 var newHead;
 
                 this.direction = this.nextDirection;
@@ -448,15 +473,18 @@
                     newHead = new Block(head.col + 1, head.row);
                 } else if (this.direction === "down") {
                     newHead = new Block(head.col, head.row + 1);
-                } else if (this.direction === "left") { 
+                } else if (this.direction === "left") {
                     newHead = new Block(head.col - 1, head.row);
                 } else if (this.direction === "up") {
                     newHead = new Block(head.col, head.row - 1);
                 }
 
                 if (this.checkCollision(newHead)) {
-                    gameOver();
-                    return;
+                    if (code2 === 0) {
+                        gameOver();
+                        console.log("je9w0vtprefw");
+                        return;
+                    }
                 }
 
                 this.segments.unshift(newHead);
@@ -464,16 +492,59 @@
                 if (newHead.equal(apple.position)) {
                     score++;
                     apple.move();
-                } else {
-                    this.segments.pop();
-                }
+                } else if (newHead.equal(crystal.position)) {
+
+                    if (cId === 1) {
+                        cId = 0;
+                        crystal.move();
+
+                        var events = [];
+                        var obj = this;
+
+                        events.push(function () {
+                            var torso;
+                            var body = obj.segments[obj.segments.length-1];
+
+                            if (obj.direction === "right") {
+                                torso = new Block(body.col + 1, body.row);
+                            } else if (obj.direction === "down") {
+                                torso = new Block(body.col, body.row + 1);
+                            } else if (obj.direction === "left") {
+                                torso = new Block(body.col - 1, body.row);
+                            } else if (obj.direction === "up") {
+                                torso = new Block(body.col, body.row - 1);
+                            }
+
+                            obj.segments.push(torso);
+
+                            score += 2;
+                        });
+
+                        events.push(function () {
+                            animationTime -= 50;
+                            setTimeout(function () {
+                                animationTime += 50;
+                            }, 10000);
+                        });
+
+                        events.push(function () {
+                            animationTime += 50;
+                            setTimeout(function () {
+                                animationTime -= 50;
+                            }, 10000);
+                        });
+
+                        var randomEvent = Math.floor(Math.random()*events.length);
+                        events[randomEvent]();
+                    }
+                } else this.segments.pop();
             }
 
             Snake.prototype.checkCollision = function (head) {
                 var leftCollision = (head.col === 0);
                 var topCollision = (head.row === 0);
                 var rightCollision = (head.col === widthInBlocks - 1);
-                var bottomCollision = (head.row === heightInBlocks);
+                var bottomCollision = (head.row === heightInBlocks - 1);
 
                 var wallCollision = leftCollision || topCollision || rightCollision || bottomCollision;
 
@@ -502,9 +573,18 @@
                 this.nextDirection = newDirection;
             }
 
+            var snake = new Snake();
+
             function Apple() {
                 var randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
                 var randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                this.position = new Block(randomCol, randomRow);
+                for (var i = 0; i < snake.segments.length; i++) {
+                    if (randomCol === snake.segments[i].col || randomRow === snake.segments[i].row) {
+                        randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                        randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                    }
+                }
                 this.position = new Block(randomCol, randomRow);
             }
 
@@ -516,20 +596,66 @@
                 var randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
                 var randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
                 this.position = new Block(randomCol, randomRow);
+                for (var i = 0; i < snake.segments.length; i++) {
+                    if (randomCol === snake.segments[i].col || randomRow === snake.segments[i].row) {
+                        randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                        randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                    }
+                }
+                this.position = new Block(randomCol, randomRow);
             }
 
             var apple = new Apple();
-            var snake = new Snake();
 
-            var intervalId = setInterval(function () {
+            function Crystal() {
+                var randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                var randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                this.position = new Block(randomCol, randomRow);
+                for (var i = 0; i < snake.segments.length; i++) {
+                    if (randomCol === snake.segments[i].col || randomRow === snake.segments[i].row) {
+                        randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                        randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                    }
+                }
+                this.position = new Block(randomCol, randomRow);
+            }
+
+            Crystal.prototype.draw = function () {
+                if (cId === 1) {
+                    this.position.drawElement(6, 0, "Blue");
+                }
+            }
+
+            Crystal.prototype.move = function () {
+                if (cId === 1) {
+                    var randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                    var randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                    this.position = new Block(randomCol, randomRow);
+                    for (var i = 0; i < snake.segments.length; i++) {
+                        if (randomCol === snake.segments[i].col || randomRow === snake.segments[i].row) {
+                            randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                            randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                        }
+                    }
+                    this.position = new Block(randomCol, randomRow);
+                }
+            }
+
+            var crystal = new Crystal();
+
+            function gameLoop() {
+                if (game) return;
                 ctx.clearRect(0, 0, width, height);
                 drawBoard();
                 drawScore();
                 snake.move();
                 snake.draw();
                 apple.draw();
+                crystal.draw();
                 drawBorder();
-            }, 100);
+                timeoutId = setTimeout(gameLoop, animationTime);
+                code2 = 0;
+            }
 
             var directions = {
                 37: "left", 
@@ -538,9 +664,56 @@
                 40: "down"
             }
 
+            ctx.clearRect(0, 0, width, height);
+            drawBoard();
+            drawScore();
+            snake.move();
+            snake.draw();
+            apple.draw();
+            crystal.draw();
+            drawBorder();
+            
+            $('#tryAgain').hide();
+            console.log(snake.segments, snake.direction, snake.nextDirection);
+            $('#tryAgain').click(function () {
+                $('#tryAgain').hide();
+                score = 0;
+                animationTime = 80;
+                game = false;
+                code2 = 1;
+
+                gameLoop();
+                setCrystal();
+
+                snake.segments = [
+                    new Block(7, 5), 
+                    new Block(6, 5), 
+                    new Block(5, 5), 
+                    new Block(4, 5)
+                ];
+
+                console.log(snake);
+
+                snake.direction = "right";
+                snake.nextDirection = "right";
+                
+                var randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                var randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                apple.position = new Block(randomCol, randomRow);
+                for (var i = 0; i < snake.segments.length; i++) {
+                    if (randomCol === snake.segments[i].col || randomRow === snake.segments[i].row) {
+                        randomCol = Math.floor(Math.random() * (widthInBlocks - 2)) + 1;
+                        randomRow = Math.floor(Math.random() * (heightInBlocks - 2)) + 1;
+                    }
+                }
+                apple.position = new Block(randomCol, randomRow);
+            });
+
             $('body').keydown(function (event) {
+                if (code1 === 0) gameLoop();
                 var newDirection = directions[event.keyCode];
                 if (newDirection) snake.setDirection(newDirection);
+                code1 = 1;
             });
             
         </script>
@@ -560,8 +733,40 @@
                 font-size: 30px;
             }
 
-            #source{
+            body{
+                text-align: center;
+            }
+
+            #source1{
                 display: none; 
+            }
+
+            #source2{
+                display: none;
+            }
+
+            .myButton{
+                box-shadow: 0px 0px 0px -50px #747ad6;
+                background:linear-gradient(to bottom, #6785b8 5%, #6687b0 100%);
+                background-color:#6785b8;
+                border-radius:5px;
+                display:inline-block;
+                cursor:pointer;
+                color:#ffffff;
+                font-family:Arial;
+                font-size:28px;
+                padding:25px 45px;
+                text-decoration:none;
+                text-shadow:0px 0px 0px #283966;
+            }
+
+            .myButton{
+                margin: 0;
+                position: absolute;
+                top: 50%;
+                left: 50%;
+                margin-right: -50%;
+                transform: translate(-50%, -50%);
             }
         </style>
     </body>
