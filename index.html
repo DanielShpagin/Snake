@@ -482,7 +482,6 @@
                 if (this.checkCollision(newHead)) {
                     if (code2 === 0) {
                         gameOver();
-                        console.log("je9w0vtprefw");
                         return;
                     }
                 }
@@ -674,13 +673,13 @@
             drawBorder();
             
             $('#tryAgain').hide();
-            console.log(snake.segments, snake.direction, snake.nextDirection);
             $('#tryAgain').click(function () {
                 $('#tryAgain').hide();
                 score = 0;
                 animationTime = 80;
                 game = false;
                 code2 = 1;
+                cId = 0;
 
                 gameLoop();
                 setCrystal();
@@ -691,8 +690,6 @@
                     new Block(5, 5), 
                     new Block(4, 5)
                 ];
-
-                console.log(snake);
 
                 snake.direction = "right";
                 snake.nextDirection = "right";
